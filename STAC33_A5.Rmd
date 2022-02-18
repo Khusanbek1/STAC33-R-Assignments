@@ -1,0 +1,115 @@
+---
+title: "STAC33 A5"
+author: "Khusanbek Mukhammad Azim"
+date: "04/03/2021"
+output: html_document
+---
+
+# Effectiveness of Treating Dandruff using PyrI, PyrII, Keto, and Placebo shampoos.
+
+
+## Abstract
+
+Anova analysis shows that not all of the given shampoos have the same mean flaking. The mean flaking values are 16.03, 17.39, 17.20, 29.39 for Keto, PyrI, PyrII, Placebo respectively. 
+
+Through Tukey's procedure it was shown that the following pairs of shampoo show a significant difference in mean flaking. The shampoo pairs are: Placebo-Keto, PyrI-Keto, PyrII-Keto, PyrI-Placebo, and  PyrII-Placebo. Each comparison has an adjusted p-value < 0.01. Keto has the lowest mean flaking value followed by PyrII and PyrI.
+
+It was also shown by Tukey's procedure that the mean difference in flaking between PyrII and PyrI is not statistically significant. Since PyrII is the same as PyrI but is instead used twice per wash, it should recommanded to just use PyrI as that would be more economical.
+
+Keto shampoo has shown to be the most effective of the four shampoo in treating dandruff with the lowest mean flaking value of 16.03 followed closely by PyrI with a mean flaking value of 17.39.
+
+
+## Introduction
+
+Dandruff does not harm one's health but it can impact a person's self-image as dandruff can cause embarrassment in social settings. The variety of shampoo available today may overwhelm consumers looking for a treatment for dandruff. This study will analyze four shampoos and their ability to treat dandruff. 
+
+The study took 355 subjects and randomly assigned each person to one of the four shampoo: PyrI, PyrII, Keto, and Placebo. After six weeks, the researches looked at eight sections on the scalp of each subject and assigned a mark from 0-10 for each section, lower mark indicates less flaking. The sum of the eight scores is taken to receive an overall score of dandruff for each subject.
+
+This study should determine whether the following four shampoos: PyrI, PyrII, Keto, and Placebo have a noticeable impact in treating dandruff.
+
+
+## Analysis
+
+We first read in the tab separated data from the following link: "http://ritsokiguess.site/STAC32/dandruff.txt".
+
+```{r, warning=FALSE, echo=FALSE}
+library(tidyverse)
+library(smmr)
+```
+
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC32/dandruff.txt"
+shampoo <- read_tsv(my_url)
+shampoo
+```
+
+```{r}
+shampoo %>% 
+  group_by(Treatment) %>% 
+  summarize(count=n())
+```
+
+Here we see our data with 355 rows (subjects) and 4 columns of observations (OBS), treatment, Group Number, Flaking score. From the 355 subjects, 106 were assigned Keto, 28 Placebo, 112 PyrI, and 109 PyrII.
+
+We first analyze the spread of each categorical treatment group given the quantitative Flaking using boxplots.
+
+```{r}
+ggplot(shampoo, aes(x=fct_inorder(Treatment), y=Flaking)) + geom_boxplot()
+```
+
+PyrII, Keto, and Placebo all appear to have similar spreads and are about symmetric. 
+PyrI has two outliers, one that is too high and too low but is otherwise also symmetric. Since PyrI has 112 observations, two outliers shouldn't skew the mean far.
+
+
+The mean of each treatment is given by the following
+
+```{r}
+shampoo %>% 
+  group_by(Treatment) %>% 
+  summarize(Mean=mean(Flaking))
+```
+
+The sample mean flaking of each treatment is 16.03 for Keto, 29.39 for Placebo, 17.39 for PyrI, and 17.20 for PyrII.
+
+
+Next, looking at the QQ plots for each treatment will reveal whether the normality assumption should hold for this data and if we should proceed with the anova test.
+
+```{r}
+ggplot(shampoo, aes(sample=Flaking)) + stat_qq() + stat_qq_line() + facet_wrap(~ Treatment)
+```
+
+All four QQ plots have points that stay near the line so our normality assumption holds for all the treatments. The slopes of the lines are also very similar, so the spreads are equal enough to use the anova test.
+
+The null hypothesis is whether the mean flaking score of each shampoo is the same against the alternative hypothesis that not all mean flaking scores are the same.
+
+```{r}
+shampoo_aov <- aov(Flaking ~ Treatment, data=shampoo)
+summary(shampoo_aov)
+```
+
+The p-value of $2\cdot 10^{-16}$ is much smaller than 0.05 therefore we can reject the null that all mean flaking scores for each treatment are the same. There is strong evidence that the mean flaking scores are not all the same between the treatments.
+
+Next is to compare all the pairs of treatments and observe which treatment stands out by using Tukey's procedure.
+
+```{r}
+TukeyHSD(shampoo_aov)
+```
+
+The shampoo pairs that do show a statisticaly significat difference in mean flaking scores are Placebo-Keto, PyrI-Keto, PyrII-Keto, PyrI-Placebo, and  PyrII-Placebo. The only pair that show no difference in mean flaking score is between PyrI and PyrII.
+
+
+## Conclusion
+
+The Tukey procedure indicated that the pairs of shampoo Placebo-Keto, PyrI-Keto, PyrII-Keto, PyrI-Placebo, and  PyrII-Placebo show a significant difference in mean flaking. From the boxplot, PyrI, PyrII, and Keto all have lower flaking than Placebo, therefore PyrI, PyrII, and Keto shampoos actually treat dandruff. 
+
+PyrII was the same as PyrI but instead had instructions to shampoo twice at each wash. There was no statistical difference in mean flaking between PyrII and PyrI. Since washing twice with PyrI would not reduce dandruff, it would be resonable to use only PyrI as that would last twice as long. 
+
+Keto shampoo is lower than PyrI and PyrII in the boxplot and it was shown during Tukey's procedure that there is a statistical difference in mean flaking compared to PyrI and PyrII. Keto having a lower mean flaking value than PyrI and PyrII is also seen when looking at the mean table for each treatment with keto having a mean flaking of 16.03 and PyrI and PyrII having mean flaking of 17.39, 17.20 respectively. 
+
+Although Keto shampoo had the lowest mean flaking score and was shown to have a meaningful difference in mean flaking score, PyrI and PyrII were very close to the mean flaking of keto.
+
+Therefore, keto is the best overall shampoo, but PyrI can also considered as an effecive shampoo for treating dandruff.
+
+
+
