@@ -1,0 +1,122 @@
+---
+title: "STAC33-A10"
+author: "Khusanbek Mukhammad Azim"
+date: "08/04/2021"
+output: html_document
+---
+
+```{r, message=FALSE}
+library(tidyverse)
+library(lubridate)
+```
+
+
+# Q.1
+
+## (a)
+
+Since the file is a .csv, we use read_csv.
+
+```{r}
+url <- "http://ritsokiguess.site/STAC33/sleeping.csv"
+sleep <- read_csv(url)
+sleep
+```
+
+We have 7 rows and 3 columns. bed.time and rise.time columns display the date and time in YMD HMS format. The sleep.time column displays the hours sleeping in decimal format.
+
+## (b)
+
+First the period that the student spends in bed in hours is computed.
+
+```{r}
+sleep %>% mutate(t = as.period(bed.time %--% rise.time)) %>% 
+  mutate(time_in_bed = hour(t) + minute(t)/60) %>% 
+  select(-t) -> sleep2
+sleep2
+```
+
+The fractional time in hours that each student was in bed is given below.
+
+```{r}
+sleep2 %>% select(time_in_bed)
+```
+
+## (c)
+
+We compute sleep efficiency be dividing the sleep time and time in bed and multiplying result by 100 to get a percentage.
+
+```{r}
+# compute sleep efficiency
+sleep2 %>% 
+  mutate(sleep_efficiency = (sleep.time/time_in_bed)*100) %>% 
+  select(bed.time, sleep_efficiency)
+```
+
+The greatest sleep efficiency of 93.93% was achieved on the night of September 8, 2013.
+
+## (d)
+
+The time spend in bed formatted as H:M:S is given by determining the period from bed.time to rise.time.
+
+```{r}
+sleep %>% 
+  mutate(time = as.period(bed.time %--% rise.time)) %>% 
+  select(bed.time, time)
+```
+
+## (e)
+
+```{r}
+sleep %>% 
+  mutate(bed_time = format(sleep$bed.time, format='%H:%M:%S')) %>% 
+  tibble(Night = 1:7, time_in_bed=bed_time) %>% 
+  ggplot(aes(x=Night, y=time_in_bed)) + geom_point() + scale_y_discrete(limits=rev) + ylab("Bed Time")
+```
+
+# Q.2
+
+## (a)
+
+```{r}
+url <- "http://ritsokiguess.site/STAC32/heightfoot.csv"
+ht <- read_csv(url)
+ht
+```
+
+We have 33 rows and 2 columns.
+
+## (b)
+
+Height is the response variable and foot is the explanatory variable.
+
+```{r}
+# compute beta hat
+
+x <- matrix(c(rep(1,33), ht$foot), nrow=33)
+y <- ht$height
+
+# calculate inverse
+a <- solve(t(x)%*%x)
+
+# calculate transpose of x time y
+b <- t(x)%*%y
+
+# beta hat
+b_hat <- a%*%b
+b_hat
+
+```
+
+The intercept is 34.336335 and the slope is 1.359062.
+
+## (c)
+
+```{r}
+ht.lm <- lm(height~foot, data=ht)
+summary(ht.lm)$coefficients
+```
+
+The correct intercept is 34.336335 and correct slope is 1.359062 which are identical to the calculated values.
+
+

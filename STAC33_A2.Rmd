@@ -1,0 +1,140 @@
+---
+title: "STAC33-A2"
+author: "Khusanbek Mukhammad Azim"
+date: "04/02/2021"
+output: html_document
+---
+
+
+# Q.1
+
+## (a)
+
+```{r}
+library(tidyverse)
+```
+
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC32/cholest.csv"
+chol <- read_csv(my_url)
+chol
+```
+
+Since the file is .csv we use read_csv. The data contains 30 rows and 4 columns. The data contains missing values for all cholesterol measurements excluding the control. 
+
+
+## (b)
+
+Since we are looking at one quantitative variable, we will use a histogram.
+
+```{r}
+ggplot(chol, aes(x=control)) + geom_histogram(binwidth=12)
+```
+
+The distribution of the control group appears to be slightly right-skewed but about normally distributed. 
+
+```{r}
+ggplot(chol, aes(x=1, y=control)) + geom_boxplot()
+```
+
+Looking at the boxplot, we can see that the plot is also slightly right-skewed with a single outlier with a cholesterol level above 235.
+
+
+## (c)
+
+Let $\mu$ be the mean cholesterol level for the Control patients. We are testing $H_0:\mu=200$ against $H_a:\mu<200$.
+Since our data is about normal, we will use the t-test.
+
+```{r}
+t.test(chol$control, mu=200, alternative = "less")
+```
+Our p-value=0.0512 > 0.05. Therefore, we cannot reject our null hypothesis that the mean cholesterol level for the Control patients is equal to 200. 
+
+
+## (d)
+
+Here we construct the 95% confidence interval.
+```{r}
+t.test(chol$control, mu=200)
+```
+The 95% confidence interval ranges from 185 to 201.
+
+
+## (e)
+
+Looking back at the historgram and boxplot.
+
+```{r}
+ggplot(chol, aes(x=control)) + geom_histogram(binwidth=12)
+```
+```{r}
+ggplot(chol, aes(x=1, y=control)) + geom_boxplot()
+```
+
+We see both the histogram and boxplot are approximately normal distributed with a slight right-skewness. The boxplot shows one outlier above a cholesterol level of 235. Since it is only one outlier that is not far off from the main distribution and we have a sample of 30 patients, the sample can still be considered normal. 
+
+Therefore, using the t procedure is not an issue.
+
+
+# Q.2
+
+## (a)
+
+```{r}
+my_url2 <- "http://ritsokiguess.site/STAC32/anchoring.csv"
+pop <- read_csv(my_url2)
+pop
+```
+The data shows 21 rows (number of students) and 2 columns.
+
+## (b)
+
+Given a single categorical and quantitative variable, side-by-side boxplots would be appropriate.
+
+```{r}
+ggplot(pop, aes(x=anchor, y=estimate)) + geom_boxplot()
+```
+
+Here we see that students who were told the population of Australia first have very little variation and report a population for Canada anywhere from 10 million to 30 million with a single outlier reporting 75 million. The distribution appears left-skewed.
+
+Compared to the students who were told the population of US first, they have a much wider variance. Their estimated population range from 1 million to 200 million with no outliers. The distribution is  slightly left-skewed.
+
+
+## (c)
+
+We can see from the boxplots that the standard deviation from Australia and US are clearly not the same.
+
+```{r}
+pop %>% 
+  group_by(anchor) %>% 
+  summarize(SD = sd(estimate))
+```
+
+Computing the standard deviation from each set of students who were told the population of Australia or US first, the standard deviation for Australia is 20 million and for US is 66 million.
+
+Since the standard deviations are not the same, we cannot use pooled t-test and so Welch t-test is more suitable for this case.
+
+
+## (d)
+
+Let $\mu$ be the guesses by the students given Australia as an anchor.
+Our null hypothesis is whether guesses given Australia as an anchor is equal to guesses given US an an anchor vs alternative hypothesis that guesses given Australia is less than guesses given US an an anchor.
+
+```{r}
+t.test(estimate ~ anchor, data = pop, alternative = "less")
+```
+
+Our p-value is 0.006019 < 0.05, so we can reject our null hypothesis that guesses of the population given Australia and US an as anchor are the same. In other words, We have sufficient evidence to say that the guesses given US as an anchor were higher than for the students given Australia as an anchor.
+
+
+## (e)
+
+```{r}
+t.test(estimate ~ anchor, data = pop)
+```
+
+Constructing a two-sided Welch t-test we get a 95% confidence interval of (-114,-18). This implies that on average those who had the US as an anchor estimated the population of Canada to be from 18 to 114 million more than those who had Australia as an anchor.
+
+From the Welch t-test, we have sufficient evidence to say that the guesses for the population of Canada given Australia as an anchor is less than if the US was given as an anchor. 
+Therefore, there is sufficient evidence to support that guesses by students given the US as an anchor will be higher than for students given Australia as an anchor.

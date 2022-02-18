@@ -1,0 +1,85 @@
+---
+title: "A6"
+author: "Khusanbek Mukhammad Azim"
+date: "11/03/2021"
+output: html_document
+---
+
+
+# Question 1
+
+## (a)
+
+The data file is organized into a table where 15 rats from each treatment are grouped together under their bone density. This creates a table with a column for treatment and each treatment row has 3 rows of bone densities.
+
+## (b)
+
+```{r, include=FALSE}
+library(tidyverse)
+```
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC32/isoflavones.txt"
+rat <- read_table(my_url)
+rat
+```
+
+First change the column name of "bone_mineral_density" to just "density" to not write a lot.
+
+```{r}
+rat %>% rename(density=bone_mineral_density) -> rat2
+rat2
+```
+
+Using na_if (https://www.rdocumentation.org/packages/dplyr/versions/0.7.8/topics/na_if) to fill in the blank spots in treatment with NA. Then fill the NA with the previous heading. (https://tidyr.tidyverse.org/reference/fill.html)
+We also remove "treatment" column as that is no longer needed.
+
+
+```{r}
+rat2 %>% mutate(t=na_if(treatment, "")) %>% 
+  select(-treatment) %>% 
+  select(everything()) %>% 
+  fill(t) -> rat2
+rat2
+  
+```
+
+Next, using separate_rows we can rearrange the density so that each values is on its own row with the appropriate treatment and is the correct variable type. (https://tidyr.tidyverse.org/reference/separate_rows.html) 
+We can then rename "t" column to "treatment" to be able to recall what the column contains.
+
+```{r}
+rat2 %>% separate_rows(density, sep= ' ', convert = TRUE) %>% 
+  rename(treatment=t) -> rat2
+rat2
+```
+
+Now we have a data frame with 45 rows (15*3=45 patients) and 2 columns of bone densities and treatment.
+
+## (c)
+
+Since we have a categorical and a quantitative variable a side-by-side boxplot is appropriate.
+
+```{r}
+ggplot(rat2, aes(x=treatment, y=density)) + geom_boxplot()
+```
+
+## (d)
+
+The boxplots all appear to be symmetric with no outliers.
+
+```{r}
+ggplot(rat2, aes(sample=density)) + stat_qq() + stat_qq_line() + facet_wrap(~treatment)
+```
+
+From the QQ plots for each treatment we see that each treatment is approximately normally distributed. 
+
+Although for the control group, a single low value appears to be slightly too high. Since it is only a single value out of 15, it is not a great concern.
+
+The slope of high dose compared with control and low dose is different, which could indicate difference in spread. But the slopes are close enough so the spread is equal enough. 
+
+Therefore, since the data appears normally distributed with an equal enough spread, I would recommend pooled t-test with Tukey's procedure since there are 3 categories. 
+
+
+
+
+

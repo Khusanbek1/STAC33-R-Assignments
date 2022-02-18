@@ -1,0 +1,133 @@
+---
+title: "STAC33_A4"
+author: "Khusanbek Mukhammad Azim"
+date: "25/02/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+library(smmr)
+```
+
+# Q.1
+
+## (a)
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC32/blood_pressure1.csv"
+bp <- read_csv(my_url)
+bp
+```
+
+Since the data is comma separated we use read_csv. The data display the 10 rows (people) and 3 columns of the blood pressure of each person before and after.
+
+## (b)
+
+This is matched pair design. The reason is each person has two blood pressures assigned to them. As opposed to having half the sample take their blood pressure before and the other half have their blood pressure taken after the appointment.
+
+## (c)
+
+Here we can run either a paired t-test or a t-test based on the differences in blood pressure. I will perform a t-test based on the differences between before and after blood pressure results.
+
+Since we want to know whether people have higher blood pressure before the appointment we want a one sided t-test with the alternative that difference is greater than 0. A positive difference would mean blood pressure before is greater than blood pressure after.  
+
+```{r}
+bp %>% mutate(diff=before-after) -> bp
+bp
+with(bp, t.test(diff, mu=0, alternative = "greater"))
+```
+
+Our p-value is 0.007545 which is smaller than 0.05. We have sufficient evidence to reject our null hypothesis that the difference in blood pressure before and after are the same. In other words, blood pressure before the appointment is indeed higher than after the appointment.
+
+## (d)
+
+We will perform a sign test on the differences with null median equal to 0
+
+```{r}
+sign_test(bp, diff, 0)
+```
+
+ We take the upper value since we want to know whether the null median is greater than 0. The upper p-value is 0.05468 which is greater than 0.05 but by a small margin. We cannot reject the null hypothesis that the median is equal to 0. Therefore, based on the median of the differences, there is actually no difference between the blood pressure before and after.
+ 
+## (e)
+ 
+```{r}
+ggplot(bp, aes(sample=diff)) + stat_qq() + stat_qq_line()
+```
+ 
+From the normal QQ plot we can see that the lowest 2 points are too low and the top 2 points are a little too high. This could indicate a skewness to the left. 
+
+```{r}
+ggplot(bp, aes(y=diff)) + geom_boxplot()
+```
+
+The boxplot shows that there is only 1 point that is too low which is an outlier and the rest of the points are valid.
+
+So the top 2 points are actually not too high and from the bottom 2 points only 1 is actually too low, therefore we do not have to worry about skewness. We only have 1 outlier that is not too far off from the lower point, so it is also ok.
+The normal QQ plot therefore is actually ok thus we can use the t-test on the differences.
+
+The conclusion we made from the t-test is therefore valid.
+
+## (f)
+
+As noted above from the boxplot there is only 1 outlier to worry about but that outlier is not too low for it to warrant concern from. The QQ plot is therefore normal enough to use the t-test. So using the t-test on the differences is more appropriate. 
+
+Our p-value from the sign test is close to being able to reject the null, but due to the sign test inefficient use of the data it could have resulted in a type 1 error.
+
+
+# Q.2
+
+## (a)
+
+Looking at the data we see that it is separated by a single space.
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC32/handspan.txt"
+hand <- read_delim(my_url, " ")
+hand
+```
+
+So we have 190 rows (students male and female) and 2 columns one with sex and the other with their handspan.
+
+## (b)
+
+```{r}
+ggplot(hand, aes(sample=handspan)) + stat_qq() + stat_qq_line() + facet_wrap(~sex)
+```
+
+For the female QQ plot, there are 2 points that are too low that could be classified as outliers. 
+As for the male QQ plot, the bottom points also appear to be too low.
+
+Overall, the QQ plots tell us that most of the data is normally distributed but both the males and females have some points that are too low, which could impact the mean.
+
+
+## (c)
+
+Let us look at the boxplots to see the outliers.
+
+```{r}
+ggplot(hand, aes(x=sex, y=handspan)) + geom_boxplot()
+```
+
+Here we can clearly see that we have 2 and 3 outliers for female and male respectively. This could cause a problem for the validity of the t-test since the outliers will bring down the mean. Therefore, using Mood's median test over two-sample t-test would be preferred.
+
+
+## (d)
+
+```{r}
+median_test(hand, handspan, sex)
+```
+
+The one-sided p-value of $1.332\cdot 10^{-19}$ is much smaller than 0.05 so we have sufficient evidence to reject the null that the medians are equal or in other words, we have sufficient evidence that the median handspan of male students is larger than that of the female students.
+
+
+```{r}
+hand %>% 
+  group_by(sex) %>% 
+  summarize(mean=mean(handspan), median=median(handspan))
+```
+
+From the table we see that the mean and median of the females and males is not too different, therefore testing whether the male students have larger median handspan than the female students is acceptable.
+
+

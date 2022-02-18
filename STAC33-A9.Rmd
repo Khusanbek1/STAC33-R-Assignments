@@ -1,0 +1,132 @@
+---
+title: "STAC33-A9"
+author: "Khusanbek Mukhammad Azim"
+date: "01/04/2021"
+output: html_document
+---
+
+```{r, message=FALSE}
+library(tidyverse)
+library(broom)
+```
+
+
+# Q.1
+
+## (a)
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC32/pulsemarch.csv"
+pulse <- read_csv(my_url)
+pulse
+```
+
+We have 40 rows and 3 columns.
+
+## (b)
+
+Since we have 2 quantitative and 1 categorical variable a scatterplot is appropriate.
+
+
+```{r}
+t1 <- "Pulse rate after marching vs pulse rate before given sex"
+```
+
+```{r}
+ggplot(pulse, aes(x=Before, y=After, colour=Sex)) + geom_point() + geom_smooth(method="lm", se=FALSE) + ggtitle(t1)
+```
+
+## (c)
+
+```{r}
+pulse.1 <- lm(After~Before+Sex, data=pulse)
+tidy(pulse.1)
+drop1(pulse.1, test="F")
+```
+
+Since the estimate for Before is positive, it indicates that an increase in the pulse rate before causes an increase in the pulse rate after. This is seen in the plot as for both the male and female the slopes are positive. 
+
+The baseline for Sex is female. Since the estimate is negative, the pulse rate after for males is lower when compared with females for the same pulse rate before. This is seen as the slope for males not being as steep when compared to the slope for females.
+
+The p-values for Before and Sex given female as the baseline are both significant.
+
+As for whether there exists some interaction between pulse rate before and sex, p-value of 0.42 given below indicates that the interaction between pulse rate before and sex is not significant in the model. 
+
+```{r}
+pulse.2 <- lm(After~Before*Sex, data=pulse)
+drop1(pulse.2, test="F")
+```
+
+
+## (d)
+
+```{r}
+# new data frame with Before pulse rates and Sex for prediction
+pulse.new <- tibble(Before = seq(55.5, 95, 0.5), Sex = gl(2, 1, length=80, labels = c("Male", "Female")))
+```
+
+```{r}
+after <- predict(pulse.1, pulse.new)
+pulse.fits <- tibble(Before=pulse.new$Before, Sex=pulse.new$Sex, after)
+pulse.fits
+```
+
+The output for the predicting pulse rate after from pulse rate before and sex is given in the column after in the table above.
+
+## (e)
+
+The significance of pulse rate before does make sense as resting pulse rate should at least increase if some physical activity is performed and pulse rate is measured after. As pulse rate before increases the pulse rate after should also increase.
+
+The fact that the pulse rate after for males is lower than for females for the same before pulse rate is a surprise. Since females are on average smaller than males, their pulse rate after increases more than it does for males. I would assume that since females are on average smaller, their pulse rate after should not increase as much when compared to males, who are larger. 
+
+## (f)
+
+The estimated value for sex of -4.8191 means that the pulse rate after for males is on average 4.8 beats per minute lower than it is for females at the same before pulse rate.
+
+
+# Q.2
+
+## (a)
+
+```{r}
+cv <- function(x){
+  sd(x)/mean(x)
+}
+```
+
+## (b)
+
+```{r}
+cv(1:5)
+```
+
+## (c)
+
+```{r}
+v <-c(-2.8, -1.8, -0.8, 1.2, 4.2)
+cv(v)
+```
+
+```{r}
+mean(v)
+```
+
+The coefficient of variation according to the function is $6.24\cdot10^{16}$. This occurred because the mean is $4.44\cdot10^{-17}$, which is very close to zero and dividing any number by a number close to zero will result in a very large output.
+
+## (d)
+
+```{r}
+cv <- function(x){
+  stopifnot(all(x>=0))
+  sd(x)/mean(x)
+}
+```
+
+```{r, error=TRUE}
+v <-c(-2.8, -1.8, -0.8, 1.2, 4.2)
+cv(v)
+```
+
+We see that the new function outputs an error stating that not all of the inputs are positive.
+
+

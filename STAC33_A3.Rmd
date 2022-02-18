@@ -1,0 +1,189 @@
+---
+title: "STAC33_A3"
+author: "Khusanbek Mukhammad Azim"
+date: "11/02/2021"
+output: html_document
+---
+
+# Q.1
+
+## (a)
+
+```{r include=FALSE}
+library(tidyverse)
+```
+
+The file type is a csv so we use read_csv.
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC32/pop.csv"
+pop <- read_csv(my_url)
+pop
+```
+We see that we have 10,000 rows and a single column v as expected.
+
+
+## (b)
+
+A histogram would be suitable for a single quantitative variable.
+
+```{r}
+ggplot(pop, aes(x=v)) + geom_histogram(bins=16)
+```
+
+The histogram is made with 16 bins. We can clearly see that it is not normally distributed and is right-skewed.  
+
+## (c)
+
+```{r}
+set.seed(1004258224)
+rerun(1000, sample(pop$v, 10, replace = TRUE))%>%
+  map( ~ t.test(., mu = 4, alternative="greater")) %>%
+  map_dbl("p.value") %>% 
+  enframe(value="pvals") %>% 
+  count(pvals <= 0.05)
+```
+
+From the simulation, we are about $173/1000 \approx 17\%$ likely to correctly reject our null hypothesis $\mu=4$. Could our result be impacted by the fact that our sample is not normal, which means we would not be able to use the t-test. Or could our mean actually be 4. Below we use bootstrap to assess these concerns.  
+
+```{r}
+set.seed(1004258224)
+rerun(1000, sample(pop$v, replace=TRUE)) %>% 
+  map_dbl(~mean(.)) %>% 
+  enframe() -> d
+
+ggplot(d, aes(x=value)) + geom_histogram(bins = 14)
+```
+
+```{r}
+mean(d$value)
+```
+
+The histogram plot tells us that our observations are normally distributed so using the t-test is valid. Regarding our mean, we get that the mean from the bootstrap samples is about 5, therefore it is correct to reject our null hypothesis $\mu=4$ in favour of the alternative $\mu>4$.
+
+
+## (d)
+
+Attempting again but by taking 50 samples from our observations.
+
+```{r}
+set.seed(1004258224)
+rerun(1000, sample(pop$v, 50, replace = TRUE))%>%
+  map( ~ t.test(., mu = 4, alternative="greater")) %>%
+  map_dbl("p.value") %>% 
+  enframe(value="pvals") %>% 
+  count(pvals <= 0.05)
+```
+
+By taking 50 samples instead of 10, we will correctly reject the null hypothesis $\mu=4$ about $746/1000 \approx 75\%$ of the time. 
+
+More samples allows Central Limit Theorem to apply and thus our sample becomes closer to normally distributed. From the bootstrap method above our sample is actually normally distributed with a mean around 5. Taking only 10 samples from the observation is not enough when the difference between our null hypothesis mean and the true mean is 1 as our case has shown.
+
+
+## (e)
+
+We will now simulate with a sample size of 10 and $H_0:\mu=5$ vs $H_a:\mu>5$.
+
+```{r}
+set.seed(1004258224)
+rerun(1000, sample(pop$v, 10, replace = TRUE))%>%
+  map( ~ t.test(., mu = 5, alternative="greater")) %>%
+  map_dbl("p.value") %>% 
+  enframe(value="pvals") %>% 
+  count(pvals <= 0.05)
+```
+
+From the above simulation, we will reject our null hypothesis $\mu=5$ about $21/1000 \approx 2\%$ of the time. In other words, we will correctly fail to reject our null hypothesis $98\%$ of the time.
+
+Since we are only changing our hypothesis testing and keeping our samples the same, we would expect our results to be similar as in part (c).
+
+Although we are taking a smaller sample, the difference in our null hypothesis and true mean is small enough that even a small sample does not affect it.
+
+```{r}
+mean(pop$v)
+```
+
+Our population mean is 5. This aligns with our bootstrap simulation and determining the mean to be 5. 
+
+
+# Q.2
+
+## (a)
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC33/protein.txt"
+pro <- read_table(my_url)
+pro
+```
+
+Having only a single column using read_table is suitable. The data has 20 rows and 1 column as expected.
+
+
+## (b)
+
+A Histogram will be suitable for a single quantitative variable.
+
+```{r}
+ggplot(pro, aes(x=protein)) + geom_histogram(bins=6)
+```
+
+Since our sample is small, the histogram has 6 bins. The histogram shows that our sample is not normally distributed and is left-skewed.
+
+
+## (c)
+
+```{r}
+set.seed(1004258224)
+rerun(1000, sample(pro$protein, replace=TRUE)) %>% 
+  map_dbl(~mean(.)) %>% 
+  enframe() -> d
+
+ggplot(d, aes(x=value)) + geom_histogram(bins = 12)
+```
+
+Although the above bootstrap graph shows, our sample is normally distributed so using t-test would be acceptable. But, our original histogram shows that it is left-skewed so the mean will also be skewed. It would be better to consider the median, and thus the sign test, as that will better account for the skewness.
+
+
+## (d)
+
+Our null hypothesis is whether the median is 6 against the alternative that the median is not equal to 6.
+
+
+```{r}
+library(smmr)
+```
+
+```{r}
+sign_test(pro, protein, 6)
+```
+
+Since we want to determine whether 6 ounces of protein per package is accurate we want our null hypothesis to be whether median is equal to 6 against the alternative that median is not equal to 6.
+
+The p-value for the median protein not being equal to 6 is 0.041. Since it is less than 0.05, we have sufficient evidence to reject our null hypothesis that the median protein is equal to 6. Therefore, there is sufficient evidence that 6 ounces of protein per package is not accurate. 
+
+```{r}
+t.test(pro$protein, mu=6)
+```
+
+Even running a t-test with $H_0:\mu=6$ vs $H_a:\mu\ne 6$, we get a p-value of 0.00045 which is much smaller than 0.05. Therefore, if we were to compute the mean for the protein, we would still have sufficient evidence of rejecting the null that the mean is 6 ounces of protein per package.
+
+
+## (e)
+
+```{r}
+sign_test(pro, protein, 6)$above_below
+```
+
+From the sign test we can observe that there are 15 observations below a median of 6 and 5 which are above. If the median was 6 we would expect there to be an equal number of observations below and above it. Since that is not the case, we have an idea that the median would not be equal to 6 and thus the null would likely be rejected.
+
+
+## (f)
+
+```{r}
+ci_median(pro, protein, conf.level = 0.90)
+```
+
+The $90\%$ confidence interval is between 4.9 and 5.8. 
+
+This tells us that if were to continue to take samples of the meals then $90\%$ of the time we can expect that the median would be between 4.9 and 5.8 ounces of protein, which agrees with our sign test that the median is not equal to 6 ounces of protein. 
+

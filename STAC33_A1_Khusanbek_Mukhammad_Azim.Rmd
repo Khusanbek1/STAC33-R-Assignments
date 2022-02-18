@@ -1,0 +1,97 @@
+---
+title: "STAC33 A1"
+author: "Khusanbek Mukhammad Azim"
+date: "28/01/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+```
+
+
+## Question 1
+
+## (a)
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC32/rainfall.txt"
+rainfall <- read_delim(my_url, " ")
+rainfall
+```
+
+The data has 47 rows and 2 columns with each column being an integer. I previewed the text file and
+it appeared to be separated by a single space so I used read_delim. It is more convenient to read the data from a link than it is to download the file. 
+
+
+## (b)
+
+Since we are comparing 2 quantitative variables, scatterplot would be appropriate.
+
+```{r}
+ggplot(rainfall, aes(x=Year, y=Rainfall)) + geom_point()
+```
+
+Placing year as the explanatory variable and rainfall as the response variable since we are interested in how the rainfall changes over time. 
+
+Setting Rainfall as the explanatory variable would not make sense since that would mean analyzing how years are explained by rainfall.
+
+
+## (c)
+
+```{r}
+ggplot(rainfall, aes(x=Year, y=Rainfall)) + geom_point() + geom_smooth(method = "lm")
+```
+
+From the regression line we can see that there is a weak positive linear relationship between the year and rainfall. This implies that the annual rainfall for Davis, California is slowly increasing over time.
+
+
+## 2
+
+## (a)
+
+```{r}
+my_url <- "http://ritsokiguess.site/STAC33/algebra.txt"
+grades <- read_table(my_url)
+grades
+```
+
+We have 20+27=47, which is the number of rows. The first column, laptop, is either yes or no. The second column, score, is quantitative as expected. In total we have 47 rows and 2 columns.
+
+
+## (b)
+
+Our data is made up of one categorical and one quantitative, therefore side-by-side boxplots would be appropriate.  
+
+```{r}
+ggplot(grades, aes(x=laptop, y=score)) + geom_boxplot()
+```
+
+## (C)
+
+The median grades for students with and without a laptop are similar, but students with no laptop had grades that ranged from 50%-100% whereas students with a laptop had grades that ranged from 68%-100%. Students with laptops overall had better grades than students without laptops.
+
+Students without laptops is slightly left skewed meaning a slightly larger portion of students were able to get better grades than the average for the class. As for students with laptops, the boxplot is almost symmetric which can imply that students with laptops with lower grades were able to get better grades compared with similar students without laptops.
+
+Although both students with and without laptops had outliers, students without laptops outlier is below 30% whereas the outliers with laptops have about a higher score than the 25th percentile of students without laptops. 
+
+## (d)
+
+```{r}
+grades %>% 
+  group_by(laptop) %>% 
+  summarize(Median=median(score), IQR=IQR(score))
+```
+
+
+Boxplot for reference
+
+```{r}
+ggplot(grades, aes(x=laptop, y=score)) + geom_boxplot()
+```
+
+
+The median score for students without laptops of 81 is similar but lower than the score of 84 for students with laptops. This is supported by the median line in the boxplot being higher for students with laptops.
+
+The IQR for students without laptops of 20 is higher than students with laptops IQR of 13. This can also be seen in the larger box for students with no laptops and a smaller box for students with a laptop.
+
